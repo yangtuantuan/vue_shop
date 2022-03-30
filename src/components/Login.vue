@@ -40,42 +40,6 @@
 <script>
 export default {
   name: 'Login',
-  data() {
-    return {
-      loginForm: {
-        username: '',
-        password: ''
-      },
-      loginFormRules: {
-        username: [
-          {
-            required: true,
-            trigger: 'blur',
-            message: '不能为空'
-          },
-          {
-            min: 3,
-            max: 10,
-            trigger: 'blur',
-            message: '长度 3 到 10 个字符'
-          }
-        ],
-        password: [
-          {
-            required: true,
-            message: '不能为空',
-            trigger: 'blur'
-          },
-          {
-            min: 6,
-            max: 15,
-            trigger: 'blur',
-            message: '长度 6 到 15 个字符'
-          }
-        ]
-      }
-    }
-  },
   methods: {
     login() {
       this.$refs.loginFormRef.validate(async (valid) => {
@@ -146,6 +110,6 @@ export default {
 }
 .btns {
   display: flex;
-  justify-content: end;
+  justify-content: flex-end;
 }
 </style>
