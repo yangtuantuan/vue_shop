@@ -40,13 +40,49 @@
 <script>
 export default {
   name: 'Login',
+  data() {
+    return {
+      loginForm: {
+        username: 'tuan',
+        password: '123456'
+      },
+      loginFormRules: {
+        username: [
+          {
+            required: true,
+            trigger: 'blur',
+            message: '不能为空'
+          },
+          {
+            min: 3,
+            max: 15,
+            trigger: 'blur',
+            message: '字符长度 3 到 15'
+          }
+        ],
+        password: [
+          {
+            required: true,
+            trigger: 'blur',
+            message: '不能为空'
+          },
+          {
+            min: 3,
+            max: 15,
+            trigger: 'blur',
+            message: '字符长度 3 到 15'
+          }
+        ]
+      }
+    }
+  },
   methods: {
     login() {
       this.$refs.loginFormRef.validate(async (valid) => {
         if (!valid) {
           return
         }
-        const { data: res } = await this.$http.post('login', this.loginForm)
+        const { data: res } = await this.$http.post('/login', this.loginForm)
         if (res.meta.status !== 200) {
           this.$message.error(res.meta.msg)
           return
