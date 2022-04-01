@@ -8,14 +8,20 @@
       <el-button type="info" @click="logout">退出</el-button>
     </el-header>
     <el-container>
-      <el-aside width="200px">
+      <el-aside :width="isCollapse ? '60px' : '200px'">
+        <div class="collapse-box" @click="collapseChange">
+          <div :class="isCollapse ? '' : 'collapsed'">|||</div>
+        </div>
         <el-menu
           background-color="#333744"
           text-color="#fff"
           active-text-color="#409bff"
-          unique-opened="true"
+          :unique-opened="true"
+          :collapse="isCollapse"
+          :collapse-transition="false"
+          :router="true"
         >
-        <!-- 菜单 -->
+          <!-- 菜单 -->
           <el-submenu
             v-for="menu in menus"
             :key="menu.id"
@@ -29,19 +35,17 @@
             <el-menu-item
               v-for="item in menu.children"
               :key="item.id"
-              :index="item.id + ''"
-              >
-                <template>
-                  <i class="el-icon-menu"></i>
-                  <span>{{item.authName}}</span>
-                </template>
-              </el-menu-item
+              :index="'/' + item.path"
             >
+              <template>
+                <i class="el-icon-menu"></i>
+                <span>{{ item.authName }}</span>
+              </template>
+            </el-menu-item>
           </el-submenu>
         </el-menu>
       </el-aside>
       <el-main>
-        Main
         <router-view></router-view>
       </el-main>
     </el-container>
@@ -61,7 +65,8 @@ export default {
         101: 'iconfont icon-shangpin',
         102: 'iconfont icon-danju',
         145: 'iconfont icon-baobiao'
-      }
+      },
+      isCollapse: false
     }
   },
 
@@ -80,6 +85,9 @@ export default {
         this.$message.error('获取菜单失败')
       }
       this.menus = res.data
+    },
+    collapseChange() {
+      this.isCollapse = !this.isCollapse
     }
   }
 }
@@ -120,5 +128,18 @@ export default {
 }
 .el-menu {
   border-right: none;
+}
+.collapse-box {
+  background-color: #4a5064;
+  color: #fff;
+  text-align: center;
+  margin: 0 auto;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 24px;
+  letter-spacing: 0.1rem;
+}
+.collapsed {
+  transform: rotate(90deg);
 }
 </style>
