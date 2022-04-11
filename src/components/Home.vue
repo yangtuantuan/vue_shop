@@ -20,6 +20,8 @@
           :collapse="isCollapse"
           :collapse-transition="false"
           :router="true"
+          :default-active="defaultActive"
+          @select="handleSelectMenu"
         >
           <!-- 菜单 -->
           <el-submenu
@@ -66,12 +68,14 @@ export default {
         102: 'iconfont icon-danju',
         145: 'iconfont icon-baobiao'
       },
-      isCollapse: false
+      isCollapse: false,
+      defaultActive: ''
     }
   },
 
   created() {
     this.getMenus()
+    this.defaultActive = this.$route.path
   },
   methods: {
     logout() {
@@ -88,6 +92,9 @@ export default {
     },
     collapseChange() {
       this.isCollapse = !this.isCollapse
+    },
+    handleSelectMenu(index) {
+      this.defaultActive = index
     }
   }
 }

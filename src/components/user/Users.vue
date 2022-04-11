@@ -6,65 +6,249 @@
       <el-breadcrumb-item>用户列表</el-breadcrumb-item>
     </el-breadcrumb>
     <el-card>
-      <!-- 添加搜索 -->
+      <!-- 搜索和添加 -->
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-input>
-            <el-button slot="append" icon="el-icon-search"></el-button>
+          <el-input v-model="queryParams.query" clearable @clear="handleSeach">
+            <el-button
+              slot="append"
+              icon="el-icon-search"
+              @click="handleSeach"
+            ></el-button>
           </el-input>
         </el-col>
-        <el-col :span="4">
-          <el-button type="primary">添加用户</el-button>
+        <el-col :span="2">
+          <el-button type="primary" @click="addFormVisible = true"
+            >添加用户</el-button
+          >
         </el-col>
+        <!-- <el-col :span="2" :offset="14">
+          <el-button type="danger">保存</el-button>
+        </el-col> -->
       </el-row>
-      <el-table :data="usersData" stripe style="width: 100%">
-        <el-table-column prop="date" label="日期" width="180">
+      <!-- 表格 -->
+      <el-table :data="usersData" stripe border style="width: 100%">
+        <el-table-column label="#" type="index"> </el-table-column>
+        <el-table-column prop="username" label="姓名"></el-table-column>
+        <el-table-column prop="email" label="邮箱"></el-table-column>
+        <el-table-column prop="mobile" label="电话"></el-table-column>
+        <el-table-column prop="role_name" label="角色"></el-table-column>
+        <el-table-column prop="mg_state" label="状态">
+          <template slot-scope="scope">
+            <el-switch
+              v-model="scope.row.mg_state"
+              @change="handleStateChange(scope.row)"
+            ></el-switch>
+          </template>
         </el-table-column>
-        <el-table-column prop="name" label="姓名" width="180">
+        <el-table-column label="操作" width="190px">
+          <template slot-scope="scope">
+            <el-button
+              type="primary"
+              size="mini"
+              icon="el-icon-edit"
+              @click="openEditUser(scope.row)"
+            ></el-button>
+            <el-button
+              type="danger"
+              size="mini"
+              icon="el-icon-delete"
+            ></el-button>
+            <el-tooltip content="分配角色" placement="top" :enterable="false">
+              <el-button
+                type="warning"
+                size="mini"
+                icon="el-icon-s-tools"
+              ></el-button>
+            </el-tooltip>
+          </template>
         </el-table-column>
-        <el-table-column prop="address" label="地址"> </el-table-column>
       </el-table>
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :page-sizes="pagesizes"
+        :total="total"
+        :current-page="queryParams.pagenum"
+        layout="sizes, prev, pager, next, jumper, ->, total"
+      >
+      </el-pagination>
     </el-card>
+    <!-- 添加弹窗 -->
+    <el-dialog
+      title="添加用户"
+      :visible.sync="addFormVisible"
+      modal
+      @closed="handleAddClosed"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        :model="addForm"
+        :label-width="addFormLabelWidth"
+        :rules="addFormRules"
+        ref="addFormRef"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input
+            v-model="addForm.username"
+            placeholder="请输入用户名"
+            autocomplete="off"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input
+            type="password"
+            v-model="addForm.password"
+            placeholder="输入密码"
+            autocomplete="off"
+          >
+          </el-input>
+        </el-form-item>
+        <el-form-item label="email" prop="email">
+          <el-input
+            type="text"
+            v-model="addForm.email"
+            placeholder="输入邮箱"
+            autocomplete="off"
+          >
+          </el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input
+            type="text"
+            v-model="addForm.mobile"
+            placeholder="输入手机号码"
+            autocomplete="off"
+          >
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="handleAddUser">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 修改弹窗 -->
+    <el-dialog
+      modal
+      width="50%"
+      title="修改用户信息"
+      :visible.sync="editFormVisible"
+      @close="handleEditClosed"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="editFormRef"
+        :rules="editFormRules"
+        :model="editForm"
+        :label-width="addFormLabelWidth"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input disabled v-model="editForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="editForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="editForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="editFormVisible = false">取消</el-button>
+        <el-button type="danger" @click="handleEditUser(editForm.id)">确定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { API } from '@/config/config'
+import { API, BASE_URL } from '@/config/config'
 export default {
   name: 'Users',
   data() {
     return {
-      usersData: [
-        {
-          date: '2016-05-02',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1518 弄'
-        },
-        {
-          date: '2016-05-04',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1517 弄'
-        },
-        {
-          date: '2016-05-01',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1519 弄'
-        },
-        {
-          date: '2016-05-03',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1516 弄'
-        }
-      ]
+      usersData: [],
+      queryParams: {
+        pagenum: 1,
+        pagesize: 5,
+        query: ''
+      },
+      pagesizes: [5, 20, 50],
+      total: 0,
+      addFormVisible: false,
+      editFormVisible: false,
+      addFormLabelWidth: '80px',
+      addForm: {
+        username: '',
+        password: '',
+        email: '',
+        mobile: ''
+      },
+      addFormRules: {
+        username: [
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 3, max: 10, message: '字符长度 3 到 10', trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { min: 3, max: 15, message: '密码长度 3 到 15', trigger: 'blur' }
+        ],
+        email: [
+          {
+            type: 'email',
+            required: true,
+            message: '请输入正确的邮箱',
+            trigger: 'blur'
+          }
+        ],
+        mobile: [
+          {
+            required: true,
+            trigger: 'blur',
+            message: '请输入手机号码'
+          },
+          {
+            pattern:
+              /^(0|86|17951)?(13[0-9]|15[012356789]|166|17[3678]|18[0-9]|14[57])[0-9]{8}$/,
+            trigger: 'blur',
+            message: '请输入正确的手机号码'
+          }
+        ]
+      },
+
+      editForm: {
+        username: '',
+        email: '',
+        mobile: '',
+        id: ''
+      },
+      editFormRules: {
+        username: [],
+        email: [
+          {
+            type: 'email',
+            required: true,
+            message: '请输入正确的email',
+            trigger: 'blur'
+          }
+        ],
+        mobile: [
+          {
+            required: true,
+            pattern:
+              /^(0|86|17951)?(13[0-9]|15[012356789]|166|17[3678]|18[0-9]|14[57])[0-9]{8}$/,
+            trigger: 'blur',
+            message: '请输入正确的手机号码'
+          }
+        ]
+      }
     }
   },
   methods: {
     async getUserList() {
       const { data: res } = await this.$http.get(API.getUserList, {
-        params: {
-          pagenum: 1,
-          pagesize: 10
-        }
+        params: this.queryParams
       })
       if (res.meta.status !== 200) {
         this.$message.error(res.meta.msg)
@@ -72,7 +256,83 @@ export default {
       }
 
       this.usersData = res.data.users
-      console.log(res)
+      this.total = res.data.total
+      console.log('usersData', this.usersData)
+    },
+    handleSizeChange(val) {
+      this.queryParams.pagesize = val
+      this.getUserList()
+    },
+    handleCurrentChange(val) {
+      this.queryParams.pagenum = val
+      this.getUserList()
+    },
+    handleSeach(val) {
+      this.queryParams.pagenum = 1
+      this.getUserList()
+    },
+    handleAddUser() {
+      this.$refs.addFormRef.validate(async (valid) => {
+        if (!valid) return false
+        const { data: res } = await this.$http.post(
+          `${BASE_URL}/users`,
+          this.addForm
+        )
+        if (res.meta.status !== 201) {
+          this.$message.error(res.meta.msg)
+          this.addFormVisible = false
+          return
+        }
+        this.$message.success('添加用户成功')
+        this.getUserList()
+        this.addFormVisible = false
+      })
+    },
+    handleAddClosed() {
+      this.$refs.addFormRef.resetFields()
+    },
+    async handleStateChange(user) {
+      const { data: res } = await this.$http.put(
+        `${BASE_URL}/users/${user.id}/state/${user.mg_state}`
+      )
+      if (res.meta.status !== 200) {
+        this.$message.error(res.meta.msg)
+        return
+      }
+      this.$message.success(res.meta.msg)
+      this.getUserList()
+    },
+
+    openEditUser(row) {
+      const { username, email, mobile, id } = row
+      this.editForm = {
+        username,
+        email,
+        mobile,
+        id
+      }
+      this.editFormVisible = true
+    },
+
+    handleEditUser(id) {
+      this.$refs.editFormRef.validate(async (valid) => {
+        if (!valid) {
+          return false
+        } else {
+          const { data: res } = await this.$http.put(`${BASE_URL}/users/${id}`, this.editForm)
+          if (res.meta.status !== 200) {
+            this.$message.error(res.meta.msg)
+            return
+          }
+          this.$message.success(res.meta.msg)
+          this.getUserList()
+          this.editFormVisible = false
+        }
+      })
+    },
+
+    handleEditClosed() {
+      this.$refs.editFormRef.resetFields()
     }
   },
   created() {
@@ -81,4 +341,12 @@ export default {
 }
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.el-table {
+  margin-top: 12px;
+}
+
+.el-pagination {
+  margin-top: 12px;
+}
+</style>
