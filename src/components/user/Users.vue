@@ -9,7 +9,12 @@
       <!-- 搜索和添加 -->
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-input v-model="queryParams.query" clearable @clear="handleSeach">
+          <el-input
+            v-model="queryParams.query"
+            placeholder="根据用户名查询"
+            clearable
+            @clear="handleSeach"
+          >
             <el-button
               slot="append"
               icon="el-icon-search"
@@ -29,7 +34,7 @@
       <!-- 表格 -->
       <el-table :data="usersData" stripe border style="width: 100%">
         <el-table-column label="#" type="index"> </el-table-column>
-        <el-table-column prop="username" label="姓名"></el-table-column>
+        <el-table-column prop="username" label="用户名"></el-table-column>
         <el-table-column prop="email" label="邮箱"></el-table-column>
         <el-table-column prop="mobile" label="电话"></el-table-column>
         <el-table-column prop="role_name" label="角色"></el-table-column>
@@ -47,12 +52,13 @@
               type="primary"
               size="mini"
               icon="el-icon-edit"
-              @click="openEditUser(scope.row)"
+              @click="openEditUser(scope.row.id)"
             ></el-button>
             <el-button
               type="danger"
               size="mini"
               icon="el-icon-delete"
+              @click="handleDeleteUser(scope.row.id)"
             ></el-button>
             <el-tooltip content="分配角色" placement="top" :enterable="false">
               <el-button
@@ -156,7 +162,9 @@
       </el-form>
       <div slot="footer">
         <el-button @click="editFormVisible = false">取消</el-button>
-        <el-button type="danger" @click="handleEditUser(editForm.id)">确定</el-button>
+        <el-button type="danger" @click="handleEditUser(editForm.id)"
+          >确定</el-button
+        >
       </div>
     </el-dialog>
   </div>
@@ -303,13 +311,19 @@ export default {
       this.getUserList()
     },
 
-    openEditUser(row) {
-      const { username, email, mobile, id } = row
+    async openEditUser(id) {
+      this.editForm.id = id
+      const { data: res } = await this.$http.get(`${BASE_URL}/users/${id}`)
+      if (res.meta.status !== 200) {
+        this.$message.error(res.meta.msg)
+        return
+      }
+
+      const { username, email, mobile } = res.data
       this.editForm = {
         username,
         email,
-        mobile,
-        id
+        mobile
       }
       this.editFormVisible = true
     },
@@ -319,7 +333,10 @@ export default {
         if (!valid) {
           return false
         } else {
-          const { data: res } = await this.$http.put(`${BASE_URL}/users/${id}`, this.editForm)
+          const { data: res } = await this.$http.put(
+            `${BASE_URL}/users/${id}`,
+            this.editForm
+          )
           if (res.meta.status !== 200) {
             this.$message.error(res.meta.msg)
             return
@@ -333,6 +350,32 @@ export default {
 
     handleEditClosed() {
       this.$refs.editFormRef.resetFields()
+    },
+
+    async handleDeleteUser(id) {
+      const confirm = await this.$confirm(
+        '此操作将永久删除用户, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch((err) => {
+        this.$message.info('已取消删除')
+        return err
+      })
+
+      if (confirm === 'confirm') {
+        const { data: res } = await this.$http.delete(`${BASE_URL}/users/${id}`)
+        if (res.meta.status !== 200) {
+          this.$message.error(res.meta.msg)
+          return
+        }
+
+        this.$message.success(res.meta.msg)
+        this.getUserList()
+      }
     }
   },
   created() {
