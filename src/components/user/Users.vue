@@ -65,6 +65,7 @@
                 type="warning"
                 size="mini"
                 icon="el-icon-s-tools"
+                @click="openSetRole(scope.row)"
               ></el-button>
             </el-tooltip>
           </template>
@@ -167,6 +168,39 @@
         >
       </div>
     </el-dialog>
+
+    <!-- 分配角色 -->
+    <el-dialog
+      modal
+      width="40%"
+      title="分配角色"
+      :visible.sync="setRoleFormVisible"
+      @close="handleSetRoleClosed"
+      :close-on-click-modal="false"
+    >
+      <div>
+        <p>当前用户 {{ userInfo.username }}</p>
+        <p>当前用户角色 {{ userInfo.role_name }}</p>
+        <div>
+          <span>分配角色: </span>
+          <el-select v-model="selectRole" placeholder="请选择">
+            <el-option
+              v-for="item in rolesList"
+              :key="item.id"
+              :label="item.roleName"
+              :value="item.id"
+            >
+            </el-option>
+          </el-select>
+        </div>
+      </div>
+      <div slot="footer">
+        <el-button @click="setRoleFormVisible = false">取消</el-button>
+        <el-button type="danger" @click="handleSetRole(editForm.id)">
+          确定
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -179,13 +213,14 @@ export default {
       usersData: [],
       queryParams: {
         pagenum: 1,
-        pagesize: 5,
+        pagesize: 10,
         query: ''
       },
-      pagesizes: [5, 20, 50],
+      pagesizes: [10, 20, 50],
       total: 0,
       addFormVisible: false,
       editFormVisible: false,
+      setRoleFormVisible: false,
       addFormLabelWidth: '80px',
       addForm: {
         username: '',
@@ -250,7 +285,14 @@ export default {
             message: '请输入正确的手机号码'
           }
         ]
-      }
+      },
+      userInfo: {
+        id: '',
+        role_name: '',
+        username: ''
+      },
+      rolesList: [],
+      selectRole: ''
     }
   },
   methods: {
@@ -359,7 +401,8 @@ export default {
         {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
-          type: 'warning'
+          type: 'warning',
+          closeOnClickModal: false
         }
       ).catch((err) => {
         this.$message.info('已取消删除')
@@ -376,6 +419,49 @@ export default {
         this.$message.success(res.meta.msg)
         this.getUserList()
       }
+    },
+
+    async openSetRole(row) {
+      this.userInfo = {
+        id: row.id,
+        username: row.username,
+        role_name: row.role_name
+      }
+
+      const { data: res } = await this.$http.get(`${BASE_URL}/roles`)
+      if (res.meta.status !== 200) {
+        return this.$message.error(res.meta.msg)
+      }
+      this.rolesList = res.data
+      this.setRoleFormVisible = true
+    },
+
+    async handleSetRole() {
+      if (!this.selectRole) {
+        return
+      }
+      const { data: res } = await this.$http.put(
+        `${BASE_URL}/users/${this.userInfo.id}/role`,
+        {
+          rid: this.selectRole
+        }
+      )
+      if (res.meta.status !== 200) {
+        return this.$message.error(res.meta.msg)
+      }
+      this.$message.success(res.meta.msg)
+      this.getUserList()
+      this.setRoleFormVisible = false
+    },
+
+    handleSetRoleClosed() {
+      this.selectRole = null
+      this.rolesList = []
+      this.userInfo = {
+        id: '',
+        role_name: '',
+        username: ''
+      }
     }
   },
   created() {
@@ -391,5 +477,9 @@ export default {
 
 .el-pagination {
   margin-top: 12px;
+}
+
+.el-select {
+  margin-left: 8px;
 }
 </style>
