@@ -75,6 +75,7 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :page-sizes="pagesizes"
+        :page-size="queryParams.pagesize"
         :total="total"
         :current-page="queryParams.pagenum"
         layout="sizes, prev, pager, next, jumper, ->, total"
