@@ -1,9 +1,11 @@
 'use strict'
 
-import Vue from 'vue'
 import axios from 'axios'
-
+import Vue from 'vue'
 import { BASE_URL } from '../config/config'
+import nprogress from 'nprogress'
+
+import 'nprogress/nprogress.css'
 
 // Full config:  https://github.com/axios/axios#request-config
 // axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
@@ -19,7 +21,8 @@ const config = {
 const _axios = axios.create(config)
 
 _axios.interceptors.request.use(
-  function (config) {
+  (config) => {
+    nprogress.start()
     // Do something before request is sent
     config.headers.Authorization = window.sessionStorage.getItem('token')
     return config
@@ -32,7 +35,8 @@ _axios.interceptors.request.use(
 
 // Add a response interceptor
 _axios.interceptors.response.use(
-  function (response) {
+  (response) => {
+    nprogress.done()
     // Do something with response data
     return response
   },
