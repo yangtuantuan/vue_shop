@@ -74,10 +74,8 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import { BASE_URL } from '@/config/config'
-import date from 'vue-date-filter'
-Vue.use(date)
+
 export default {
   data() {
     return {

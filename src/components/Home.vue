@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { API } from '@/config/config'
+import { BASE_URL } from '@/config/config'
 export default {
   name: 'Home',
   data() {
@@ -83,7 +83,7 @@ export default {
       this.$router.push('/login')
     },
     async getMenus() {
-      const { data: res } = await this.$http.get(API.getMenus)
+      const { data: res } = await this.$http.get(`${BASE_URL}/rights/tree`)
       console.log('this.menus', res.data)
       if (res.meta.status !== 200) {
         this.$message.error('获取菜单失败')

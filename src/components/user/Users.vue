@@ -206,7 +206,7 @@
 </template>
 
 <script>
-import { API, BASE_URL } from '@/config/config'
+import { BASE_URL } from '@/config/config'
 export default {
   name: 'Users',
   data() {
@@ -298,7 +298,7 @@ export default {
   },
   methods: {
     async getUserList() {
-      const { data: res } = await this.$http.get(API.getUserList, {
+      const { data: res } = await this.$http.get(`${BASE_URL}/users`, {
         params: this.queryParams
       })
       if (res.meta.status !== 200) {

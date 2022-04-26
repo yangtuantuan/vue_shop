@@ -5,6 +5,7 @@ import './assets/fonts/iconfont.css'
 import './plugins/filters'
 import './plugins/axios'
 import './plugins/element'
+import './plugins/dateFilter'
 import router from './router'
 
 Vue.config.productionTip = false
